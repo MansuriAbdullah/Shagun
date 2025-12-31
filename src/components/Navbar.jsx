@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useProducts } from '../context/ProductContext';
 
 const Navbar = () => {
