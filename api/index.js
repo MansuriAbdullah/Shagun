@@ -21,6 +21,8 @@ app.use(express.json({ limit: '10mb' })); // Allow large images
 
 // MongoDB Connection (Serverless Friendly)
 let isConnected = false;
+let lastError = null;
+
 const connectDB = async () => {
     if (isConnected) return;
     try {
@@ -28,11 +30,16 @@ const connectDB = async () => {
         const maskedURI = process.env.MONGO_URI ? process.env.MONGO_URI.replace(/:([^:@]+)@/, ':****@') : "MISSING_URI";
         console.log("📝 URI:", maskedURI);
 
-        await mongoose.connect(process.env.MONGO_URI);
-        isConnected = true;
+        const conn = await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 5000 // Fail fast
+        });
+        isConnected = conn.connections[0].readyState === 1;
         console.log("✅ MongoDB Connected");
+        lastError = null;
     } catch (err) {
         console.error("❌ Connection Error:", err);
+        lastError = err.message;
+        isConnected = false;
     }
 };
 
