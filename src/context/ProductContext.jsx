@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// API Base URL (Assumes server runs on 5000)
-const API_URL = 'http://localhost:5000/api';
+// API Base URL (Relative path handled by Vite Proxy locally and Vercel in prod)
+const API_URL = '/api';
 
 const ProductContext = createContext();
 
