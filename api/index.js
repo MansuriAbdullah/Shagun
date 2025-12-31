@@ -1,123 +1,116 @@
-
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-dotenv.config();
+// Fix __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load Config
+dotenv.config({ path: '.env.new' }); // Priority load new config
+dotenv.config(); // Fallback
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '10mb' })); // Allow large images
 
-// MongoDB Connection
+// MongoDB Connection with Retry Logic
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sagun_shop";
+const connectDB = async () => {
+    try {
+        console.log("🔌 Connecting to MongoDB...");
+        const maskedURI = MONGO_URI.replace(/:([^:@]+)@/, ':****@');
+        console.log("📝 Connection String:", maskedURI);
+        await mongoose.connect(MONGO_URI);
+        console.log("✅ MongoDB Connected Successfully");
+    } catch (err) {
+        console.error("❌ Connection Error:", err.codeName || err.code || err);
+        console.log("🔄 Retrying in 5 seconds...");
+        setTimeout(connectDB, 5000);
+    }
+};
+connectDB();
 
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('MongoDB Connected Successfully'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
-
-// --- Schemas & Models ---
+// Schemas
+const CollectionSchema = new mongoose.Schema({
+    id: String,
+    title: String,
+    image: String,
+    layout: String
+}, { strict: false });
 
 const ProductSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    price: { type: Number, required: true },
-    tag: String,
-    description: String,
-    image: String, // Base64 or URL
-    bgPos: String, // Legacy sprite support
-    category: String,
-    collectionId: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now }
-});
+    id: String,
+    name: String,
+    price: String,
+    image: String,
+    collectionId: { type: String, required: true }
+}, { strict: false });
 
-const CollectionSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    layout: { type: String, default: 'grid' },
-    backgroundImage: String,
-    backgroundSize: String
-});
-
-const Product = mongoose.model('Product', ProductSchema);
 const Collection = mongoose.model('Collection', CollectionSchema);
+const Product = mongoose.model('Product', ProductSchema);
 
-// --- Routes ---
+// API Routes
 
+// Collections
 app.get('/api/collections', async (req, res) => {
     try {
         const collections = await Collection.find();
         res.json(collections);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/collections', async (req, res) => {
+    console.log("➡️ Saving Collection:", req.body.title);
     try {
-        const newCollection = new Collection(req.body);
-        const saved = await newCollection.save();
+        const newCol = new Collection(req.body);
+        const saved = await newCol.save();
+        console.log("✅ Saved:", saved._id);
         res.json(saved);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-app.put('/api/collections/:id', async (req, res) => {
-    try {
-        const updated = await Collection.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json(updated);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+    } catch (e) {
+        console.error("❌ Save Error:", e);
+        res.status(400).json({ error: e.message });
     }
 });
 
 app.delete('/api/collections/:id', async (req, res) => {
     try {
-        await Collection.findByIdAndDelete(req.params.id);
-        await Product.deleteMany({ collectionId: req.params.id });
-        res.json({ message: 'Deleted' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        await Collection.deleteOne({ _id: req.params.id }); // Using _id from Mongo
+        res.json({ message: "Deleted" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Products
 app.get('/api/products', async (req, res) => {
     try {
         const products = await Product.find();
         res.json(products);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/products', async (req, res) => {
+    console.log("➡️ Saving Product:", req.body.name);
     try {
-        const newProduct = new Product(req.body);
-        const saved = await newProduct.save();
+        const newProd = new Product(req.body);
+        const saved = await newProd.save();
+        console.log("✅ Product Saved:", saved._id);
         res.json(saved);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-app.put('/api/products/:id', async (req, res) => {
-    try {
-        const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json(updated);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+    } catch (e) {
+        console.error("❌ Product Save Error:", e);
+        res.status(400).json({ error: e.message });
     }
 });
 
 app.delete('/api/products/:id', async (req, res) => {
     try {
-        await Product.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Deleted' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        await Product.deleteOne({ _id: req.params.id });
+        res.json({ message: "Deleted" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Export for Vercel
@@ -126,5 +119,5 @@ export default app;
 // Start Server locally
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 }
