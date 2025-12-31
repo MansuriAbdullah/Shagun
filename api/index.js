@@ -120,6 +120,21 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // Export for Vercel
+// Health Check
+app.get('/api/health', async (req, res) => {
+    try {
+        const state = mongoose.connection.readyState;
+        const states = { 0: "Disconnected", 1: "Connected", 2: "Connecting", 3: "Disconnecting" };
+        res.json({
+            status: "ok",
+            db_state: states[state] || state,
+            uri_configured: !!process.env.MONGO_URI
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 export default app;
 
 // Start Server locally

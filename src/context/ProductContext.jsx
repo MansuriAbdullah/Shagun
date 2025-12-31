@@ -31,6 +31,8 @@ export const ProductProvider = ({ children }) => {
                 setProducts(prods);
             } else {
                 console.error("Failed to fetch data from server");
+                // Only alert on first load to avoid spamming
+                if (products.length === 0) alert("Cannot connect to server. Please check your internet or Vercel Message: " + catRes.statusText);
             }
         } catch (e) {
             console.error("API Error:", e);
