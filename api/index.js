@@ -19,22 +19,28 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Allow large images
 
-// MongoDB Connection with Retry Logic
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sagun_shop";
+// MongoDB Connection (Serverless Friendly)
+let isConnected = false;
 const connectDB = async () => {
+    if (isConnected) return;
     try {
         console.log("🔌 Connecting to MongoDB...");
-        const maskedURI = MONGO_URI.replace(/:([^:@]+)@/, ':****@');
-        console.log("📝 Connection String:", maskedURI);
-        await mongoose.connect(MONGO_URI);
-        console.log("✅ MongoDB Connected Successfully");
+        const maskedURI = process.env.MONGO_URI ? process.env.MONGO_URI.replace(/:([^:@]+)@/, ':****@') : "MISSING_URI";
+        console.log("📝 URI:", maskedURI);
+
+        await mongoose.connect(process.env.MONGO_URI);
+        isConnected = true;
+        console.log("✅ MongoDB Connected");
     } catch (err) {
-        console.error("❌ Connection Error:", err.codeName || err.code || err);
-        console.log("🔄 Retrying in 5 seconds...");
-        setTimeout(connectDB, 5000);
+        console.error("❌ Connection Error:", err);
     }
 };
-connectDB();
+
+// Ensure DB is connected for every request
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
 // Schemas
 const CollectionSchema = new mongoose.Schema({
