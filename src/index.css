@@ -1,18 +1,17 @@
 /* Variables */
 :root {
-  --primary-bg: #E8F6EF;
-  /* Soft Pista Green Light */
-  --primary-dark: #2E5A44;
-  /* Deep Green Text */
-  --gold-metallic: #D4AF37;
-  --gold-champagne: #F7E7CE;
-  --gold-glow: rgba(212, 175, 55, 0.6);
+  --primary-bg: #F9FBF8;
+  --primary-dark: #1A3C2D;
+  /* Deeper Emerald */
+  --gold-metallic: #C6A866;
+  --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+  --green-gradient: linear-gradient(145deg, #1A3522, #0F2016);
   --white: #FFFFFF;
-  --black: #1A1A1A;
+  --black: #0F1210;
   --font-heading: 'Playfair Display', serif;
   --font-body: 'Lato', sans-serif;
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.1);
-  --transition-smooth: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  --shadow-soft: 0 15px 35px rgba(0, 0, 0, 0.08);
+  --transition-smooth: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 * {
@@ -136,7 +135,7 @@ img {
   background: rgba(232, 246, 239, 0.9);
   backdrop-filter: blur(10px);
   z-index: 1000;
-  padding: 15px 0;
+  padding: 10px 0;
   border-bottom: 2px solid var(--gold-metallic);
   transition: var(--transition-smooth);
 }
@@ -175,7 +174,8 @@ img {
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--primary-dark);
+  color: #000;
+  font-weight: 700;
   position: relative;
   cursor: pointer;
 }
@@ -444,15 +444,36 @@ img {
 /* Carousel Section */
 .section-alt {
   padding: 100px 0;
-  background: radial-gradient(circle, #2e5a44 0%, #1a3c2d 100%);
+  background: var(--green-gradient);
   color: var(--white);
+  position: relative;
 }
 
-.section-alt h2,
-.section-alt h3,
-.section-alt p,
+.section-alt::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gold-gradient);
+}
+
+.section-alt h2 {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
 .section-alt .section-subtitle {
-  color: var(--white);
+  color: #FCF6BA;
+  letter-spacing: 3px;
 }
 
 .carousel-container {

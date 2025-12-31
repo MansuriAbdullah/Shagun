@@ -6,8 +6,8 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="container nav-container">
-                <div className="logo">
-                    <img src="/images/logo.png" alt="Shagun Boutique" style={{ height: '80px', objectFit: 'contain', borderRadius: '5px' }} />
+                <div className="logo" style={{ position: 'relative', width: '200px', height: '50px' }}>
+                    <img src="/images/logo.png?v=2" alt="Shagun Boutique" style={{ position: 'absolute', top: '-15px', left: '0', height: '110px', objectFit: 'contain', zIndex: 1001, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }} />
                 </div>
                 <ul className={`nav-links ${isOpen ? 'open' : ''}`}>
                     <li><a href="#home" onClick={() => setIsOpen(false)}>Home</a></li>
